@@ -115,7 +115,138 @@ LIMIT 10;</code></pre>
             <img src="Exploring_b2b_data/chart3.PNG" class="img-fluid rounded w-55" alt="table1">
         </div>
 
+        <h2 class="mt-5">Finding Features That Need Improving</h2>
 
+        <h5 class="mt-3">I now explore the 'ticket' table. I want to see if I can find anything in the initial_message column that might hint towards something needing improvement.</h5>
+        <h5>Let's query the messages that have a questionmark in them - this might give us an insight into any potential problematic features.</h5>
+    
+        <div class="rounded mt-3 mb-3" style="background-color:#DCDCDC;">
+            <pre class="p-1"><code>SELECT initial_message
+FROM tickets
+WHERE initial_message LIKE '%?%';</code></pre>
+        </div>
+
+        <div class="container text-center mb-3 rounded p-1" style="background-color: #F5F5F5;">
+            <table class="table">
+                <thead class=""><tr><th>initial_message</th></tr> </thead>
+                <tbody>
+                <tr><td>Hi there, can you explain how billing and credits function?</td></tr>
+                <tr><td>Hi, any plans to integrate with Google Fonts?</td></tr>
+                <tr><td>Any way to have designs sync from your desktop to your iPhone? We'd like to look at mobile designs in the right perspective.</td></tr>
+                <tr><td>How long would it take to import my Google Photos library?</td></tr>
+                <tr><td>Why isn't the auto-organize feature working? It worked last week?</td></tr>
+                <tr><td>...</td></tr>
+
+                </tbody>
+                
+                
+            </table>
+                
+        </div>
+        
+        <h5 class="mt-3">Looks like there are a lot of questions... (53 in fact). Let's find the 5 most commonly occuring words in the messages that are larger than 5 letters (to avoid words like 'and' or 'I') and see what comes up. </h5>
+
+        <div class="rounded mt-3 mb-3" style="background-color:#DCDCDC;">
+            <pre class="p-1"><code>SELECT wordcounttable.word, wordcounttable.ct
+FROM (
+    SELECT lower(translate(unnest(string_to_array(initial_message, ' ')), '?!.,":', '')) AS word, count(*) AS ct --inspired by https://dba.stackexchange.com/questions/127540/return-top-100-words-from-strings
+    FROM   tickets
+    GROUP  BY 1 
+    ORDER  BY 2 DESC
+) AS wordcounttable
+WHERE LENGTH(wordcounttable.word) > 5
+LIMIT 5;</code></pre>
+        </div>
+
+        <div class="container text-center mb-3 rounded p-1" style="background-color: #F5F5F5;">
+            <table class="table">
+                <thead class=""><tr><th>word</th><th>ct</th></tr> </thead>
+                <tbody>
+                        <tr><td>feature</td><td>19</td></tr>
+                        <tr><td>auto-organize</td><td>12</td></tr>
+                        <tr><td>designs</td><td>8</td></tr>
+                        <tr><td>export</td><td>6</td></tr>
+                        <tr><td>product</td><td>6</td></tr>
+
+                </tbody>
+                
+                
+            </table>
+                
+        </div>
+        
+        <h5>Ignoring feature as a keyword (because we are looking for the feature) let's see what comes up when we search for 'auto-organize'.</h5>
+
+        <div class="rounded mt-3 mb-3" style="background-color:#DCDCDC;">
+            <pre class="p-1"><code>SELECT COUNT(initial_message), initial_message
+FROM tickets
+WHERE initial_message LIKE '%auto-organize%?%'
+GROUP BY 2;</code></pre>
+        </div>
+
+        <div class="container text-center mb-3 rounded p-1" style="background-color: #F5F5F5;">
+           
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>count</th>
+                        <th>initial_message</th>
+                    </tr>
+                </thead>
+                <tr>
+                    <td>1</td>
+                    <td>It doesn't seem like the auto-organize feature is working?</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Hello, can you help me with the auto-organize feature?</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Hi, reporting a problem with the auto-organize feature.</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Hello, the auto-organize canvas feature appears to crash the app.</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>I think I've found a bug with auto-organize. Can we hop on a quick Zoom?</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Hi, Can you help me use the auto-organize feature?</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Why isn't the auto-organize feature working? It worked last week?</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>I think I'm doing it right, but I get a crash error when using the auto-organize feature. Help!</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Hello, please can you help me with auto-organize?</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Hello, I saw your newsletter and the auto-organize feature looks cool. Do you have to enable it for my account?</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Ooof, looks like auto-organize feature is having issues.</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Bummer. The auto-organize feature isn't working</td>
+                </tr>
+            </table>
+                
+        </div>
+
+        <h5 class="mt-3">Looks like the auto-organize feature needs rapid improvement...</h5>
+        
     </div>
 
 
