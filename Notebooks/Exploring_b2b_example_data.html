@@ -32,23 +32,93 @@
     </h4>
   </div>
 
-  <div class="container mt-5 ">
-    <h2>Plotting the number of times event-names were used by users</h2>
-    <h5 class="mt-3 ">This will give an insight into which features (event-names) were most often used by users and could give an indication as to which features should be improved most (made more user-friendly). </h5>
-    
-    <div class="rounded mt-3 mb-3" style="background-color:#DCDCDC;">
-        <pre><code> SELECT events.name, COUNT(*) FROM events GROUP BY 1;</code></pre>
+    <div class="container mt-5 ">
+        <h2>Plotting the number of times event-names were used by users</h2>
+        <h5 class="mt-3 ">This will give an insight into which features (event-names) were most often used by users and could give an indication as to which features should be improved most (made more user-friendly). </h5>
+        
+        <div class="rounded mt-3 mb-3" style="background-color:#DCDCDC;">
+            <pre><code> SELECT events.name, COUNT(*) FROM events GROUP BY 1;</code></pre>
+        </div>
+
+        <div class="container text-center mb-3 rounded p-1" style="background-color: #F5F5F5;">
+            <img src="Exploring_b2b_data/chart1.PNG" class="img-fluid rounded w-55" alt="table1">
+            <img src="Exploring_b2b_data/Piechart1.PNG" class= "img-fluid rounded w-55 mt-1" alt="piechart1">
+        </div>
+
+        <h5 class="mb-3">Looks like the 'Start Subscription' feature is not doing too well, indicating perhaps that users are not willing to subscribe. The company could try and improve upon this aspect in the future. Let's see 
+            how many times this feature has been used. 
+        </h5>
+
+        <div class="rounded mt-3 mb-3" style="background-color:#DCDCDC;">
+            <pre><code> SELECT count(events.name) FROM events WHERE events.name = 'Start Subscription';</code></pre>
+        </div>
+        <div class="container text-left mb-3 rounded p-0" style="background-color: #F5F5F5;">
+            <pre><code> 7</code></pre>
+        </div>
+
+        <h5 class="mb-5">Only 7 times... 
+        </h5>
+
+        <h2>Plotting the top 10 users of the most used event-name feature</h2>
+
+        <h5 class="mt-3">Given that we know that the most used event-name feature is 'Add Image' we can simply query the following:</h5>
+
+        <div class="rounded mt-3 mb-3" style="background-color:#DCDCDC;">
+            <pre class="p-1"><code>SELECT events.user_id, COUNT(events.name)
+FROM events
+WHERE events.name = 'Add Image'
+GROUP BY 1
+LIMIT 10;</code></pre>
+        </div>
+
+        <div class="container text-center mb-3 rounded p-1" style="background-color: #F5F5F5;">
+            <img src="Exploring_b2b_data/chart2.PNG" class="img-fluid rounded w-55" alt="table1">
+        </div>
+
+        <h5 class="mt-3">But what if we did not know the most used event-name feature? We can solve this by 1) finding the amount of times each feature was used, 2) finding the most used feature (max) and 3) substitute this into the where statement of the query above, like so:</h5>
+
+        <div class="rounded mt-3 mb-3" style="background-color:#DCDCDC;">
+            <pre class="p-1"><code>SELECT events.user_id, COUNT(events.name)
+FROM events
+WHERE events.name = (
+    SELECT DerivedTable.Names
+    FROM (SELECT events.name AS Names , count(events.name) AS counts FROM events GROUP BY 1) AS DerivedTable
+    WHERE DerivedTable.counts = (
+    SELECT MAX(DerivedTable.counts)
+    FROM (SELECT events.name AS Names , count(events.name) AS counts FROM events GROUP BY 1) AS DerivedTable
+    )   
+)
+GROUP BY 1
+LIMIT 10;</code></pre>
+        </div>
+
+        <h5 class="mt-3">This is quite a lengthy piece of code, nevertheless I was surprised at how quickly it was able to compute this (0.688 seconds, compared to the 0.656 seconds from the query above). This might just have to do with my internet connection, however, since I am extracting this data from an external server. Let me know if you know a quicker way of doing the above! 
+            Anyway, having automated the query above further, we can easily also find the users that got a subscription (i.e. used the most unused feature).
+        </h5>
+
+        <div class="rounded mt-3 mb-3" style="background-color:#DCDCDC;">
+            <pre class="p-1"><code>SELECT events.user_id, COUNT(events.name)
+FROM events
+WHERE events.name = (
+    SELECT DerivedTable.Names
+    FROM (SELECT events.name AS Names , count(events.name) AS counts FROM events GROUP BY 1) AS DerivedTable
+    WHERE DerivedTable.counts = (
+    SELECT MIN(DerivedTable.counts) -- Switching MAX to MIN
+    FROM (SELECT events.name AS Names , count(events.name) AS counts FROM events GROUP BY 1) AS DerivedTable
+    )   
+)
+GROUP BY 1
+LIMIT 10;</code></pre>
+        </div>
+
+        <div class="container text-center mb-3 rounded p-1" style="background-color: #F5F5F5;">
+            <img src="Exploring_b2b_data/chart3.PNG" class="img-fluid rounded w-55" alt="table1">
+        </div>
+
+
     </div>
 
-    <div class="text-center mb-3">
-        <img src="Exploring_b2b_data/chart1.PNG" class="img-fluid rounded w-55" alt="table1">
-        <img src="Exploring_b2b_data/Piechart1.PNG" class= "img-fluid rounded w-55" alt="piechart1">
-    </div>
 
-    <h5 class="mb-3">Looks like the 'Start Subscription' feature is not doing too well, indicating perhaps that users are not willing to subscribe. The company could try and improve upon this aspect in the future. </h5>
-    
-
-    </div>
 
     <div class="container mt-4 mb-4">
         <h6>*Please note that this notebook is still being worked on and may change in the next coming days.</h6>
